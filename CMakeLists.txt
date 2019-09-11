@@ -8,9 +8,7 @@ if (PROJECT_NAME STREQUAL CMAKE_PROJECT_NAME)
     include(FindGTest)
     include(GoogleTest)
 
-    if (NOT GTEST_FOUND)
-        message(FATAL_ERROR "googletest doesn't exist!")
-    endif ()
+    find_package(GTest REQUIRED)
 
     add_executable(res_mgmt_test)
     target_sources(res_mgmt_test
