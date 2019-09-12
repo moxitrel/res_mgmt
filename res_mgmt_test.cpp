@@ -22,7 +22,7 @@ TEST(WITH, CreateFailed)
     EXPECT_FALSE(sk);
     EXPECT_TRUE (fk);
     // no leak
-    EXPECT_EQ(RES_MGMT_CHECK(), 0);
+    EXPECT_EQ(RES_MGMT_REPORT(), 0);
 }
 
 TEST(WITH, CreateSucceed)
@@ -46,7 +46,7 @@ TEST(WITH, CreateSucceed)
     EXPECT_TRUE (sk);
     EXPECT_FALSE(fk);
     // no leak
-    EXPECT_EQ(RES_MGMT_CHECK(), 0);
+    EXPECT_EQ(RES_MGMT_REPORT(), 0);
 }
 
 TEST(WITH, Nested)
@@ -82,7 +82,7 @@ TEST(WITH, Nested)
     EXPECT_FALSE(fk2);
     EXPECT_FALSE(fk1);
     // no leak
-    EXPECT_EQ(RES_MGMT_CHECK(), 0);
+    EXPECT_EQ(RES_MGMT_REPORT(), 0);
 }
 
 
@@ -112,7 +112,7 @@ jumpOutBlock:
     EXPECT_FALSE(afterJump);
     EXPECT_FALSE(fk);
     // 1 leak
-    EXPECT_EQ(RES_MGMT_CHECK(), 1);
+    EXPECT_EQ(RES_MGMT_REPORT(), 1);
 }
 
 TEST(WITH, BreakNoLeak)
@@ -139,11 +139,33 @@ TEST(WITH, BreakNoLeak)
     EXPECT_FALSE(afterBreak);
     EXPECT_FALSE(fk);
     // no leak
-    EXPECT_EQ(RES_MGMT_CHECK(), 0);
+    EXPECT_EQ(RES_MGMT_REPORT(), 0);
 }
 
-int main(int argc, char* argv[])
+TEST(DEFER, Success)
 {
-    ::testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
+    res_mgmt_leaks_cnt = 0;
+
+    bool defered = false;
+
+    DEFER(defered = true) {
+        EXPECT_FALSE(defered);
+    }
+    EXPECT_TRUE(defered);
+}
+
+TEST(DEFER, BreakNoLeak)
+{
+    res_mgmt_leaks_cnt = 0;
+
+    bool defered = false;
+    bool afterBreak = false;
+
+    DEFER(defered = true) {
+        EXPECT_FALSE(defered);
+        break;
+        afterBreak = true;
+    }
+    EXPECT_TRUE (defered);
+    EXPECT_FALSE(afterBreak);
 }
