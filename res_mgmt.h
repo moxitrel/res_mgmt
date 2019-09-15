@@ -63,8 +63,8 @@ void DEFER_example(void)
 #include <assert.h>
 
 
-// generate unique "res_mgmt_once" to avoid the warning of shadowed var in nested WITH()
-#define RES_MGMT_ONCE()     RES_MGMT_ONCE_1(__LINE__)
+// generate unique var "res_mgmt_once" to avoid the warning of shadowed variable when nest WITH()
+#define RES_MGMT_ONCE       RES_MGMT_ONCE_1(__LINE__)
 #define RES_MGMT_ONCE_1(X)  RES_MGMT_ONCE_2(X)
 #define RES_MGMT_ONCE_2(X)  res_mgmt_once_##X
 
@@ -74,30 +74,30 @@ void DEFER_example(void)
 //
 // Use *break* to exit block.
 #define WITH(INIT, CHECK, EXIT)                                                 \
-    /* RES_MGMT_ONCE():         */                                              \
+    /* RES_MGMT_ONCE:           */                                              \
     /*  0: init                 */                                              \
     /* >0: create res succeed   */                                              \
     /* <0: create res failed    */                                              \
-    for (int RES_MGMT_ONCE() = 0; !RES_MGMT_ONCE();)                            \
+    for (int RES_MGMT_ONCE = 0; !RES_MGMT_ONCE;)                                \
                                                                                 \
         /* create resource */                                                   \
-        for (INIT; !RES_MGMT_ONCE();                                            \
+        for (INIT; !RES_MGMT_ONCE;                                              \
                 /* destroy resource */                                          \
-                RES_MGMT_ONCE() > 0 && ((void)(EXIT), RES_MGMT_LEAKS_POP()))    \
+                RES_MGMT_ONCE > 0 && ((void)(EXIT), RES_MGMT_LEAKS_POP()))      \
                                                                                 \
             /* capture break */                                                 \
-            for (;!RES_MGMT_ONCE();)                                            \
+            for (;!RES_MGMT_ONCE;)                                              \
                                                                                 \
                 /* run block */                                                 \
                 if ((CHECK)                                                     \
-                    ? (++RES_MGMT_ONCE(), RES_MGMT_LEAKS_PUSH(), true)          \
-                    : (--RES_MGMT_ONCE(), false))
+                    ? (++RES_MGMT_ONCE, RES_MGMT_LEAKS_PUSH(), true)            \
+                    : (--RES_MGMT_ONCE, false))
 
 
 #define DEFER(...)                                                              \
-    for (int RES_MGMT_ONCE() = 0; !RES_MGMT_ONCE(); __VA_ARGS__)                \
+    for (int RES_MGMT_ONCE = 0; !RES_MGMT_ONCE; __VA_ARGS__)                    \
         /* capture break */                                                     \
-        for (;!RES_MGMT_ONCE()++;)
+        for (;!RES_MGMT_ONCE++;)
 
 
 #ifndef RES_MGMT_NDEBUG
