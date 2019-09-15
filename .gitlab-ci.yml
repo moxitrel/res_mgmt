@@ -1,0 +1,17 @@
+variables:
+  GTEST_ROOT: /usr/src/googletest/googletest
+
+default:
+  image: registry.gitlab.com/colorate/res_mgmt
+
+unit_test:
+  script:
+    # build googletest
+    - "cmake -S $GTEST_ROOT -B $GTEST_ROOT"
+    - "cmake --build $GTEST_ROOT"
+
+    # test
+    - "cd $(mktemp -d)"
+    - "cmake $CI_PROJECT_DIR"
+    - "cmake --build ."
+    - "ctest --output-on-failure"
