@@ -45,7 +45,9 @@ void DEFER_example(void)
     T* p = malloc(sizeof *p);
     if (p == NULL) {
         return;
-    } else DEFER(free(p)) {     //
+    }
+
+    DEFER(free(p)) {            //
         ...                     // ...
     }                           // free(p);
 }
@@ -90,8 +92,8 @@ void DEFER_example(void)
                                                                                 \
                 /* run block */                                                 \
                 if ((CHECK)                                                     \
-                    ? (++RES_MGMT_ONCE, RES_MGMT_LEAKS_PUSH(), true)            \
-                    : (--RES_MGMT_ONCE, false))
+                    ? (RES_MGMT_ONCE++, RES_MGMT_LEAKS_PUSH(), true)            \
+                    : (RES_MGMT_ONCE--, false))
 
 
 #define DEFER(...)                                                              \
@@ -119,11 +121,11 @@ void DEFER_example(void)
         return res_mgmt_leaks_cnt;
     }
 
-#   define RES_MGMT_LEAKS_INFO()    ("[W " __FILE__ " " TO_STRING(__LINE__) "] " "WITH() leaks!" )
+#   define RES_MGMT_LEAKS_INFO      ("[W " __FILE__ " " TO_STRING(__LINE__) "] " "WITH() leaks!" )
 #   define RES_MGMT_LEAKS_PUSH()                                                \
     (                                                                           \
         res_mgmt_leaks_cnt < RES_MGMT_LEAKS_MAX                                 \
-            && (res_mgmt_leaks[res_mgmt_leaks_cnt] = RES_MGMT_LEAKS_INFO()),    \
+            && (res_mgmt_leaks[res_mgmt_leaks_cnt] = RES_MGMT_LEAKS_INFO),      \
         res_mgmt_leaks_cnt++                                                    \
     )
 #   define RES_MGMT_LEAKS_POP()     (res_mgmt_leaks_cnt--)
