@@ -2,7 +2,7 @@
 
 * API
 WITH(INIT, CHECK, EXIT) {...}
-    Create resource when enter block, destroy when exit. (for like syntax)
+    Create resource when enter block, destroy when exit.
 
 DEFER(EXP) {...}
     Run EXP when quit block. (golang)
