@@ -10,8 +10,13 @@ unit_test:
     - "cmake -S $GTEST_ROOT -B $GTEST_ROOT"
     - "cmake --build $GTEST_ROOT"
 
-    # test
+    # build
     - "cd $(mktemp -d)"
-    - "cmake $CI_PROJECT_DIR"
+    - "cmake $CI_PROJECT_DIR -DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
     - "cmake --build ."
+
+    # static analysis
+    - "cppcheck --project=compile_commands.json --enable=warning,performance,portability --error-exitcode=1"
+
+    # test
     - "ctest --output-on-failure"
