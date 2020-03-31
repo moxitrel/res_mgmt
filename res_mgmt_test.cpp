@@ -63,8 +63,8 @@ TEST(WITH, Nested)
     bool fk2 = false;
 
     WITH(doInit1 = true, true, doExit1 = true) {
+        sk1 = true;
         WITH(doInit2 = true, true, doExit2 = true) {
-            sk1 = true;
             sk2 = true;
         } else {
             fk2 = true;
