@@ -22,7 +22,7 @@ TEST(WITH, CreateFailed)
     EXPECT_FALSE(sk);
     EXPECT_TRUE (fk);
     // no leak
-    EXPECT_EQ(RES_MGMT_REPORT(), 0);
+    EXPECT_EQ(RES_MGMT_LEAKS()[0], nullptr);
 }
 
 TEST(WITH, CreateSucceed)
@@ -46,7 +46,7 @@ TEST(WITH, CreateSucceed)
     EXPECT_TRUE (sk);
     EXPECT_FALSE(fk);
     // no leak
-    EXPECT_EQ(RES_MGMT_REPORT(), 0);
+    EXPECT_EQ(RES_MGMT_LEAKS()[0], nullptr);
 }
 
 TEST(WITH, Nested)
@@ -73,6 +73,7 @@ TEST(WITH, Nested)
         fk1 = true;
     }
 
+    // run sk block
     EXPECT_TRUE (doInit1);
     EXPECT_TRUE (doExit1);
     EXPECT_TRUE (doInit2);
@@ -82,7 +83,7 @@ TEST(WITH, Nested)
     EXPECT_FALSE(fk2);
     EXPECT_FALSE(fk1);
     // no leak
-    EXPECT_EQ(RES_MGMT_REPORT(), 0);
+    EXPECT_EQ(RES_MGMT_LEAKS()[0], nullptr);
 }
 
 
@@ -94,13 +95,13 @@ TEST(WITH, JumpOutBlockLeak)
     bool doExit = false;
     bool sk = false;
     bool fk = false;
-    bool afterJump = false;
+    bool afterGoto = false;
 
 
     WITH(doInit = true, true, doExit = true) {
         sk = true;
         goto jumpOutBlock;
-        afterJump = true;
+        afterGoto = true;
     } else {
         fk = true;
     }
@@ -109,10 +110,11 @@ jumpOutBlock:
     EXPECT_TRUE (doInit);
     EXPECT_FALSE(doExit);
     EXPECT_TRUE (sk);
-    EXPECT_FALSE(afterJump);
+    EXPECT_FALSE(afterGoto);
     EXPECT_FALSE(fk);
     // 1 leak
-    EXPECT_EQ(RES_MGMT_REPORT(), 1);
+    EXPECT_NE(RES_MGMT_LEAKS()[0], nullptr);
+    EXPECT_EQ(RES_MGMT_LEAKS()[1], nullptr);
 }
 
 TEST(WITH, BreakNoLeak)
@@ -139,7 +141,7 @@ TEST(WITH, BreakNoLeak)
     EXPECT_FALSE(afterBreak);
     EXPECT_FALSE(fk);
     // no leak
-    EXPECT_EQ(RES_MGMT_REPORT(), 0);
+    EXPECT_EQ(RES_MGMT_LEAKS()[0], nullptr);
 }
 
 TEST(DEFER, Success)
@@ -152,6 +154,29 @@ TEST(DEFER, Success)
         EXPECT_FALSE(defered);
     }
     EXPECT_TRUE(defered);
+    // no leak
+    EXPECT_EQ(RES_MGMT_LEAKS()[0], nullptr);
+}
+
+TEST(DEFER, JumpOutBlockLeak)
+{
+    res_mgmt_leaks_cnt = 0;
+
+    bool defered = false;
+    bool afterGoto = false;
+
+    DEFER(defered = true) {
+        EXPECT_FALSE(defered);
+        goto JumpOutBlock;
+        afterGoto = true;
+    }
+JumpOutBlock:
+
+    EXPECT_FALSE(defered);
+    EXPECT_FALSE(afterGoto);
+    // 1 leak
+    EXPECT_NE(RES_MGMT_LEAKS()[0], nullptr);
+    EXPECT_EQ(RES_MGMT_LEAKS()[1], nullptr);
 }
 
 TEST(DEFER, BreakNoLeak)
@@ -168,4 +193,6 @@ TEST(DEFER, BreakNoLeak)
     }
     EXPECT_TRUE (defered);
     EXPECT_FALSE(afterBreak);
+    // no leak
+    EXPECT_EQ(RES_MGMT_LEAKS()[0], nullptr);
 }
