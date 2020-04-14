@@ -1,14 +1,14 @@
 /* Resource management macros
 
 * API
-WITH(INIT, CHECK, EXIT) {...}
+WITH(ENTER, CHECK, EXIT) {...}
     Create resource when enter block, destroy when exit.
 
 DEFER(EXP) {...}
     Run EXP when quit block. (golang)
 
-RES_MGMT_REPORT()
-    Print leak lines if any.
+RES_MGMT_LEAKS()
+    Return leak locations. (const char* [])
 
 RES_MGMT_NDEBUG
     Disable leaks check when defined.
@@ -61,21 +61,18 @@ void DEFER_example(void)
 
 #include <stddef.h>
 #include <stdbool.h>
-#include <stdio.h>
-#include <assert.h>
-
 
 // generate unique var "res_mgmt_once" to avoid the warning of shadowed variable when nest WITH()
 #define RES_MGMT_ONCE       RES_MGMT_ONCE_1(__LINE__)
 #define RES_MGMT_ONCE_1(X)  RES_MGMT_ONCE_2(X)
 #define RES_MGMT_ONCE_2(X)  res_mgmt_once_##X
 
-// INIT : exp, run before enter block
+// ENTER: exp, run before enter block
 // CHECK: exp, enter block if true
 // EXIT : exp, run after exit block
 //
 // Use *break* to exit block.
-#define WITH(INIT, CHECK, EXIT)                                                 \
+#define WITH(ENTER, CHECK, EXIT)                                                \
     /* RES_MGMT_ONCE:           */                                              \
     /*  0: init                 */                                              \
     /* >0: create res succeed   */                                              \
@@ -83,7 +80,7 @@ void DEFER_example(void)
     for (int RES_MGMT_ONCE = 0; !RES_MGMT_ONCE;)                                \
                                                                                 \
         /* create resource */                                                   \
-        for (INIT; !RES_MGMT_ONCE;                                              \
+        for (ENTER; !RES_MGMT_ONCE;                                             \
                 /* destroy resource */                                          \
                 RES_MGMT_ONCE > 0 && ((void)(EXIT), RES_MGMT_LEAKS_POP()))      \
                                                                                 \
@@ -96,47 +93,31 @@ void DEFER_example(void)
                     : (RES_MGMT_ONCE--, false))
 
 
-#define DEFER(...)                                                              \
-    for (int RES_MGMT_ONCE = 0; !RES_MGMT_ONCE; __VA_ARGS__)                    \
-        /* capture break */                                                     \
-        for (;!RES_MGMT_ONCE++;)
+#define DEFER(...)  WITH(, true, (__VA_ARGS__))
 
 
 #ifndef RES_MGMT_NDEBUG
-    // How many nested WITH() have leak trace
+    // How many leaks or nested WITH() will be traced
 #   define RES_MGMT_LEAKS_MAX (1u << 5u)
 
-    const char* res_mgmt_leaks[RES_MGMT_LEAKS_MAX]; // where (source line) leaks, i.e. jump out block directly
-    size_t      res_mgmt_leaks_cnt;                 // how many leaks
+    const char* res_mgmt_leaks[RES_MGMT_LEAKS_MAX+1];   // where (source line) leaks, i.e. jump out block directly
+    size_t      res_mgmt_leaks_cnt;                     // how many leaks
 
-    // print warning if leak detected
-    inline static size_t res_mgmt_report(void)
-    {
-        const size_t max = res_mgmt_leaks_cnt < RES_MGMT_LEAKS_MAX
-            ? res_mgmt_leaks_cnt
-            : RES_MGMT_LEAKS_MAX;
-        for (size_t i = 0; i < max; i++) {
-            printf("%s\n", res_mgmt_leaks[i]);
-        }
-        return res_mgmt_leaks_cnt;
-    }
-
-#   define RES_MGMT_LEAKS_INFO      ("[W " __FILE__ " " TO_STRING(__LINE__) "] " "WITH() leaks!" )
+#   define RES_MGMT_LEAKS_INFO      ("[RES_MGMT " __FILE__ " " TO_STRING(__LINE__) "] leak!" )
 #   define RES_MGMT_LEAKS_PUSH()                                                \
     (                                                                           \
         res_mgmt_leaks_cnt < RES_MGMT_LEAKS_MAX                                 \
-            && (res_mgmt_leaks[res_mgmt_leaks_cnt] = RES_MGMT_LEAKS_INFO),      \
-        res_mgmt_leaks_cnt++                                                    \
+            && (res_mgmt_leaks[res_mgmt_leaks_cnt++] = RES_MGMT_LEAKS_INFO)     \
     )
-#   define RES_MGMT_LEAKS_POP()     (res_mgmt_leaks_cnt--)
-#   define RES_MGMT_REPORT()        res_mgmt_report()
+#   define RES_MGMT_LEAKS_POP()     (--res_mgmt_leaks_cnt)
+#   define RES_MGMT_LEAKS()         (res_mgmt_leaks[res_mgmt_leaks_cnt] = NULL, res_mgmt_leaks)
 
 #   define TO_STRING(...)           TO_STRING_(__VA_ARGS__)
 #   define TO_STRING_(...)          #__VA_ARGS__
 #else
 #   define RES_MGMT_LEAKS_PUSH(...) 0   // nop
 #   define RES_MGMT_LEAKS_POP()     0   // nop
-#   define RES_MGMT_REPORT()        0   // nop
+#   define RES_MGMT_LEAKS()         res_mgmt_leaks
 #endif
 
 #endif // MOXITREL_RES_MGMT_H_
