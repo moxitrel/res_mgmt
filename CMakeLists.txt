@@ -8,8 +8,6 @@ if (PROJECT_NAME STREQUAL CMAKE_PROJECT_NAME)
     include(FindGTest)
     include(GoogleTest)
 
-    find_package(GTest REQUIRED)
-
     add_executable(res_mgmt_test)
     target_sources(res_mgmt_test
             PRIVATE res_mgmt_test.cpp)
