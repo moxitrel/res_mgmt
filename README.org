@@ -1,0 +1,46 @@
+* Introduction
+
+Introduce macros for resource management to avoid forgetting destroying resources (e.g. memory, lock, file) in some cases.
+
+* Macros
+
+*** WITH(ENTER, CHECK, EXIT) {...}
+    Evaluate ENTER, run block if CHECK is ture, evaluate EXIT when quit block. (like for(){})
+
+#+BEGIN_SRC C
+void malloc_example(void)
+{
+    WITH(T* p = malloc(sizeof *p), p != NULL, free(p)) {                // T* p = malloc(sizeof *p);
+                                                                        // if (p != NULL) {
+        ...                                                             //      ...
+                                                                        //      free(p);
+    }                                                                   // }
+}
+
+void FILE_example(void)
+{
+    WITH(FILE* fp = fopen("file.txt", "r"), fp != NULL, fclose(fp)) {   // FILE* fp = fopen("file.txt", "r");
+                                                                        // if (fp != NULL) {
+        ...                                                             //      ...
+                                                                        //      fclose(fp);
+    }                                                                   // }
+}
+#+END_SRC
+
+*** DEFER(EXP) {...}
+Evaluate EXP when quit block.
+
+#+BEGIN_SRC C
+void socket_example(void)
+{
+    int sockets[2];
+    int err = socketpair(AF_UNIX, SOCK_DGRAM, 0, sockets);
+    if (err) {
+        // handle error
+    }
+
+    DEFER(close(sockets[0]), close(sockets[1])) {           //
+        ...                                                 // ...
+    }                                                       // close(sockets[0]), close(sockets[1]);
+}
+#+END_SRC

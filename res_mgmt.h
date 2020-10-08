@@ -90,7 +90,7 @@ void DEFER_example(void)
                     : (RES_MGMT_ONCE--, 0))
 
 
-#define DEFER(...)  WITH(, , (__VA_ARGS__))
+#define DEFER(...)  WITH(/* noop */, , (__VA_ARGS__))
 
 
 #ifndef RES_MGMT_NDEBUG
@@ -102,7 +102,7 @@ void DEFER_example(void)
     const char* res_mgmt_leaks[RES_MGMT_LEAKS_MAX+1];   // where (source line) leaks, i.e. jump out block directly
     unsigned    res_mgmt_leaks_cnt;                     // how many leaks
 
-#   define RES_MGMT_LEAKS_INFO      ("[RES_MGMT " __FILE__ " " TO_STRING(__LINE__) "] leak!" )
+#   define RES_MGMT_LEAKS_INFO      ("[RES_MGMT " __FILE__ " " RES_MGMT_TO_STRING(__LINE__) "] leak!" )
 #   define RES_MGMT_LEAKS_PUSH()                                                \
     (                                                                           \
         res_mgmt_leaks_cnt < RES_MGMT_LEAKS_MAX                                 \
@@ -111,8 +111,8 @@ void DEFER_example(void)
 #   define RES_MGMT_LEAKS_POP()     (--res_mgmt_leaks_cnt)
 #   define RES_MGMT_LEAKS()         (res_mgmt_leaks[res_mgmt_leaks_cnt] = 0, res_mgmt_leaks)
 
-#   define TO_STRING(...)           TO_STRING_(__VA_ARGS__)
-#   define TO_STRING_(...)          #__VA_ARGS__
+#   define RES_MGMT_TO_STRING(...)  RES_MGMT_TO_STRING1(__VA_ARGS__)
+#   define RES_MGMT_TO_STRING1(...) #__VA_ARGS__
 #else
 #   define RES_MGMT_LEAKS_PUSH(...) 0   // nop
 #   define RES_MGMT_LEAKS_POP()     0   // nop
@@ -123,7 +123,7 @@ void DEFER_example(void)
 #define RES_MGMT_EXP(E)                  RES_MGMT_EXP_01N(RES_MGMT_HAS_COMMA(E), RES_MGMT_HAS_COMMA(RES_MGMT_GET_COMMA E ()), E)
 #define RES_MGMT_EXP_01N(...)            RES_MGMT_EXP_01N1(__VA_ARGS__)
 #define RES_MGMT_EXP_01N1(D1,D2,E)       RES_MGMT_EXP_##D1##D2(E)
-#define RES_MGMT_EXP_01(E)               1
+#define RES_MGMT_EXP_01(E)               1  // if E is empty
 #define RES_MGMT_EXP_00(E)               E
 #define RES_MGMT_EXP_11(E)               E
 #define RES_MGMT_HAS_COMMA(...)          RES_MGMT_HAS_COMMA1(__VA_ARGS__, RES_MGMT_HAS_COMMA_PADDING)

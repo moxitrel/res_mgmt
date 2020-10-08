@@ -1,7 +1,7 @@
 #include "res_mgmt.h"
 #include "gtest/gtest.h"
 
-TEST(WITH, CreateFailed)
+TEST(With, CreateFailed)
 {
     res_mgmt_leaks_cnt = 0;
 
@@ -25,7 +25,7 @@ TEST(WITH, CreateFailed)
     EXPECT_EQ(RES_MGMT_LEAKS()[0], nullptr);
 }
 
-TEST(WITH, CreateSucceed)
+TEST(With, CreateSucceed)
 {
     res_mgmt_leaks_cnt = 0;
 
@@ -49,7 +49,7 @@ TEST(WITH, CreateSucceed)
     EXPECT_EQ(RES_MGMT_LEAKS()[0], nullptr);
 }
 
-TEST(WITH, Nested)
+TEST(With, Nested)
 {
     res_mgmt_leaks_cnt = 0;
 
@@ -87,7 +87,7 @@ TEST(WITH, Nested)
 }
 
 
-TEST(WITH, JumpOutBlockLeak)
+TEST(With, JumpOutBlockLeak)
 {
     res_mgmt_leaks_cnt = 0;
 
@@ -117,7 +117,7 @@ jumpOutBlock:
     EXPECT_EQ(RES_MGMT_LEAKS()[1], nullptr);
 }
 
-TEST(WITH, BreakNoLeak)
+TEST(With, BreakNoLeak)
 {
     res_mgmt_leaks_cnt = 0;
 
@@ -139,6 +139,29 @@ TEST(WITH, BreakNoLeak)
     EXPECT_TRUE (doExit);
     EXPECT_TRUE (sk);
     EXPECT_FALSE(afterBreak);
+    EXPECT_FALSE(fk);
+    // no leak
+    EXPECT_EQ(RES_MGMT_LEAKS()[0], nullptr);
+}
+
+TEST(With, EmptyCheck)
+{
+    res_mgmt_leaks_cnt = 0;
+
+    bool doInit = false;
+    bool doExit = false;
+    bool sk = false;
+    bool fk = false;
+
+    WITH(doInit = true, , doExit = true) {
+        sk = true;
+    } else {
+        fk = true;
+    }
+
+    EXPECT_TRUE (doInit);
+    EXPECT_TRUE (doExit);
+    EXPECT_TRUE (sk);   // empty CHECK is true
     EXPECT_FALSE(fk);
     // no leak
     EXPECT_EQ(RES_MGMT_LEAKS()[0], nullptr);
