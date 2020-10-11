@@ -167,7 +167,7 @@ TEST(With, EmptyCheck)
     EXPECT_EQ(RES_MGMT_LEAKS()[0], nullptr);
 }
 
-TEST(DEFER, Success)
+TEST(Defer, Success)
 {
     res_mgmt_leaks_cnt = 0;
 
@@ -181,7 +181,7 @@ TEST(DEFER, Success)
     EXPECT_EQ(RES_MGMT_LEAKS()[0], nullptr);
 }
 
-TEST(DEFER, JumpOutBlockLeak)
+TEST(Defer, JumpOutBlockLeak)
 {
     res_mgmt_leaks_cnt = 0;
 
@@ -202,7 +202,7 @@ JumpOutBlock:
     EXPECT_EQ(RES_MGMT_LEAKS()[1], nullptr);
 }
 
-TEST(DEFER, BreakNoLeak)
+TEST(Defer, BreakNoLeak)
 {
     res_mgmt_leaks_cnt = 0;
 
