@@ -5,16 +5,23 @@ Introduce macros for resource management to avoid forgetting destroying resource
 * Macros
 
 *** WITH(ENTER, CHECK, EXIT) {...}
-    Evaluate ENTER, run block if CHECK is ture, evaluate EXIT when quit block. (like for(){})
+    Evaluate ENTER first; run block if CHECK evaluated ture, evaluate EXIT when quit block. (like for())
 
 #+BEGIN_SRC C
 void malloc_example(void)
 {
-    WITH(T* p = malloc(sizeof *p), p != NULL, free(p)) {                // T* p = malloc(sizeof *p);
-                                                                        // if (p != NULL) {
-        ...                                                             //      ...
-                                                                        //      free(p);
-    }                                                                   // }
+    WITH(T* p = malloc(sizeof *p), p != NULL, free(p)) {    // T* p = malloc(sizeof *p);
+                                                            // if (p != NULL) {
+        ...                                                 //      ...
+                                                            //      free(p);
+    }                                                       // }
+}
+
+void lock_example(void)
+{
+    WITH(mtx_lock(&lock), , mtx_unlock(&lock)) {    // mtx_lock(&lock);
+        ...                                         // ...
+    }                                               // mtx_unlock(&lock)
 }
 
 void FILE_example(void)
